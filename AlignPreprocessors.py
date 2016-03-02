@@ -19,7 +19,7 @@
 # Rules:
 # 1. Comments are skipped. C++ does not support nested comments. So it is
 #	 not supported. 
-# 2. BEGIN_MODUEL_PREPROCESSOR increases the indentation level of all preprocessing
+# 2. BEGIN_MOD_PREPROCESSOR increases the indentation level of all preprocessing
 #    statements before the next closest END_PREPROCESSOR by 1. 
 # 3. BEGIN_DEFN_PREPROCESSOR uses the same level of indentation same as 
 #	 BEGIN_PREPROCESSOR 
