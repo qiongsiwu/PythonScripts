@@ -9,19 +9,25 @@
 #	For new line:
 #		- '\n'	NEW_LINE
 #	For preprocessor:
-#		- BEGIN_PREPROCESSOR: '#if' or '#ifndef' or '#ifdef' 
+#		- BEGIN_MOD_PREPROCESSOR: '#if\s*'
+#       - BEGIN_DEFN_PREPROCESSOR: '#ifdef' or #ifndef
 #		- CONTINUE_PREPROCESSOR: 
-#			'#elif' or '#else' or '#include' or '#define' or 'undef' or 'error'
+#			'#elif' or '#else' or '#include' or '#define' or 
+#           'undef' or 'error' 
 #		- END_PREPROCESSOR: '#endif'		
 #    
 # Rules:
 # 1. Comments are skipped. C++ does not support nested comments. So it is
 #	 not supported. 
-# 2. BEGIN_PREPROCESSOR increases the indentation level of all preprocessing
+# 2. BEGIN_MODUEL_PREPROCESSOR increases the indentation level of all preprocessing
 #    statements before the next closest END_PREPROCESSOR by 1. 
-# 3. CONTINUE_PREPROCESSOR uses the same level of indentation same as 
+# 3. BEGIN_DEFN_PREPROCESSOR uses the same level of indentation same as 
+#	 BEGIN_PREPROCESSOR 
+# 4. CONTINUE_PREPROCESSOR uses the same level of indentation same as 
 #	 BEGIN_PREPROCESSOR
-# 4. END_PREPROCESSOR ends the current level of indentation. 
+# 5. END_PREPROCESSOR: if the current indentation block is a definition preprocessor, 
+#	 keep the current indentation level. If the current indentaiton block is
+#	 a mod preprocessor, decrease indentation level. 
 #
 # See http://www.cprogramming.com/reference/preprocessor/ for the list
 # of preprocessing directives.
@@ -34,9 +40,15 @@ import os
 
 Token = collections.namedtuple('Token', ['typ', 'value', 'line', 'column'])
 
+# Overall scanner states to skip comments
 INITIAL = 0
 IN_ONE_LINE_COMMENT = 1
 IN_MULTI_LINE_COMMENT = 2
+
+# States for preprocessors
+OUT = 0; 
+IN_DEFN = 1; 
+IN_MOD = 2; 
 
 TAB = '   '
 
@@ -45,7 +57,8 @@ def tokenize(code):
 		('BEGIN_ONE_LINE_COMMENT', r'//.*'),   	
 		('BEGIN_MULTI_LINE_COMMENT', r'/\*'),   
 		('END_MULTI_LINE_COMMENT', r'\*/'), 
-		('BEGIN_PREPROCESSOR', r'#\s*if(ndef|def)?'), 
+		('BEGIN_DEFN_PREPROCESSOR', r'#\s*if(def|ndef)\s+'),	
+		('BEGIN_MOD_PREPROCESSOR', r'#\s*if\s+'), 					
 		('CONTINUE_PREPROCESSOR', \
 			r'#\s*(elif|else|include|define|undef|error)'),
 		('END_PREPROCESSOR', r'#\s*endif'),
@@ -53,6 +66,7 @@ def tokenize(code):
 		('SKIP', r'.'), 						#skip everything else
 	]	
 	state = INITIAL
+	pp_state_stack = []
 	tok_regex = '|'.join('(?P<%s>%s)' % pair for pair in token_specification)
 	current_pp_indent = 0;
 	line_num = 1
@@ -79,14 +93,20 @@ def tokenize(code):
 		else:
 			if state == INITIAL:
 				column = mo.start() - line_start
-				if kind == 'BEGIN_PREPROCESSOR':
-					current_pp_indent += 1
+				if kind == 'BEGIN_DEFN_PREPROCESSOR':
+					pp_state_stack.append(IN_DEFN)
 					yield Token(kind, current_pp_indent - 1, line_num, column)
+				elif kind == 'BEGIN_MOD_PREPROCESSOR':
+					pp_state_stack.append(IN_MOD)
+					current_pp_indent += 1
+					yield Token(kind, current_pp_indent - 1, line_num, column)				
 				elif kind == 'CONTINUE_PREPROCESSOR':
 					yield Token(kind, current_pp_indent - 1, line_num, column)
 				elif kind == 'END_PREPROCESSOR':
 					yield Token(kind, current_pp_indent - 1, line_num, column)
-					current_pp_indent -= 1	
+					curr_pp_state = pp_state_stack.pop()
+					if curr_pp_state == IN_MOD:
+						current_pp_indent -= 1
 
 def add_tab_to_beginning_of_line(line, num_tabs):
 	line = TAB * num_tabs + line
