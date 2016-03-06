@@ -18,16 +18,18 @@
 #    
 # Rules:
 # 1. Comments are skipped. C++ does not support nested comments. So it is
-#	 not supported. 
+#    not supported. 
 # 2. BEGIN_MOD_PREPROCESSOR increases the indentation level of all preprocessing
 #    statements before the next closest END_PREPROCESSOR by 1. 
 # 3. BEGIN_DEFN_PREPROCESSOR uses the same level of indentation same as 
-#	 BEGIN_PREPROCESSOR 
+#    BEGIN_PREPROCESSOR 
 # 4. CONTINUE_PREPROCESSOR uses the same level of indentation same as 
-#	 BEGIN_PREPROCESSOR
+#    BEGIN_PREPROCESSOR
 # 5. END_PREPROCESSOR: if the current indentation block is a definition preprocessor, 
-#	 keep the current indentation level. If the current indentaiton block is
-#	 a mod preprocessor, decrease indentation level. 
+#    keep the current indentation level. If the current indentaiton block is
+#    a mod preprocessor, decrease indentation level. 
+#
+# TAB is hardcoded to 3 spaces. 
 #
 # See http://www.cprogramming.com/reference/preprocessor/ for the list
 # of preprocessing directives.
