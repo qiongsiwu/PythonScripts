@@ -134,7 +134,7 @@ def main():
 	if len(sys.argv) != 2:
 		print("Please indicate file to produce")
 		return
-	fileaddress = os.getcwd() + '\\' + sys.argv[1]
+	fileaddress = sys.argv[1]
 	print("Fixing file " + fileaddress)
 	ProcessThisFile(fileaddress)
 	print("Finished!")
